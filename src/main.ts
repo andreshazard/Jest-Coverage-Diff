@@ -7,6 +7,8 @@ import {DiffChecker} from './DiffChecker'
 
 async function run(): Promise<void> {
   try {
+    console.log("test log!!!!");
+    console.log(exec(pwd));
     const repoName = github.context.repo.repo
     const repoOwner = github.context.repo.owner
     const githubToken = core.getInput('accessToken')
