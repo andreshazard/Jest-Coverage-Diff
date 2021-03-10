@@ -9,6 +9,8 @@ async function run(): Promise<void> {
   try {
     console.log('test log!!!!')
     console.log(execSync('pwd').toString())
+    execSync('cd frontend')
+    console.log(execSync('pwd').toString())
     const repoName = github.context.repo.repo
     const repoOwner = github.context.repo.owner
     const githubToken = core.getInput('accessToken')
