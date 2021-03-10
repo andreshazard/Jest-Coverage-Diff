@@ -2025,6 +2025,8 @@ function run() {
     var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
         try {
+	    console.log("test!!!!");
+	    console.log(exec('pwd'));
             const repoName = github.context.repo.repo;
             const repoOwner = github.context.repo.owner;
             const githubToken = core.getInput('accessToken');
@@ -2036,12 +2038,12 @@ function run() {
             const branchNameBase = (_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.base.ref;
             const branchNameHead = (_b = github.context.payload.pull_request) === null || _b === void 0 ? void 0 : _b.head.ref;
             child_process_1.execSync(commandToRun);
-            const codeCoverageNew = (JSON.parse(fs_1.default.readFileSync('coverage-summary.json').toString()));
+            const codeCoverageNew = (JSON.parse(fs_1.default.readFileSync('./frontend/coverage/coverage-summary.json').toString()));
             child_process_1.execSync('/usr/bin/git fetch');
             child_process_1.execSync('/usr/bin/git stash');
             child_process_1.execSync(`/usr/bin/git checkout --progress --force ${branchNameBase}`);
             child_process_1.execSync(commandToRun);
-            const codeCoverageOld = (JSON.parse(fs_1.default.readFileSync('coverage-summary.json').toString()));
+            const codeCoverageOld = (JSON.parse(fs_1.default.readFileSync('./frontend/coverage/coverage-summary.json').toString()));
             const currentDirectory = child_process_1.execSync('pwd')
                 .toString()
                 .trim();
