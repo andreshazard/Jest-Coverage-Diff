@@ -2026,7 +2026,7 @@ function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
 	    console.log("test!!!!");
-	    console.log(exec('pwd'));
+	    console.log(child_process_1.execSync('pwd'));
             const repoName = github.context.repo.repo;
             const repoOwner = github.context.repo.owner;
             const githubToken = core.getInput('accessToken');
