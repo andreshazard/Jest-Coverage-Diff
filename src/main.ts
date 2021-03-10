@@ -19,14 +19,14 @@ async function run(): Promise<void> {
     const branchNameHead = github.context.payload.pull_request?.head.ref
     execSync(commandToRun)
     const codeCoverageNew = <CoverageReport>(
-      JSON.parse(fs.readFileSync('./frontend/coverage-summary.json').toString())
+      JSON.parse(fs.readFileSync('./frontend/coverage/coverage-summary.json').toString())
     )
     execSync('/usr/bin/git fetch')
     execSync('/usr/bin/git stash')
     execSync(`/usr/bin/git checkout --progress --force ${branchNameBase}`)
     execSync(commandToRun)
     const codeCoverageOld = <CoverageReport>(
-      JSON.parse(fs.readFileSync('./frontend/coverage-summary.json').toString())
+      JSON.parse(fs.readFileSync('./frontend/coverage/coverage-summary.json').toString())
     )
     const currentDirectory = execSync('pwd')
       .toString()
