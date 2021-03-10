@@ -7,8 +7,8 @@ import {DiffChecker} from './DiffChecker'
 
 async function run(): Promise<void> {
   try {
-    console.log("test log!!!!");
-    console.log(exec(pwd));
+    console.log('test log!!!!')
+    console.log(execSync('pwd'))
     const repoName = github.context.repo.repo
     const repoOwner = github.context.repo.owner
     const githubToken = core.getInput('accessToken')
@@ -21,14 +21,18 @@ async function run(): Promise<void> {
     const branchNameHead = github.context.payload.pull_request?.head.ref
     execSync(commandToRun)
     const codeCoverageNew = <CoverageReport>(
-      JSON.parse(fs.readFileSync('./frontend/coverage/coverage-summary.json').toString())
+      JSON.parse(
+        fs.readFileSync('./frontend/coverage/coverage-summary.json').toString()
+      )
     )
     execSync('/usr/bin/git fetch')
     execSync('/usr/bin/git stash')
     execSync(`/usr/bin/git checkout --progress --force ${branchNameBase}`)
     execSync(commandToRun)
     const codeCoverageOld = <CoverageReport>(
-      JSON.parse(fs.readFileSync('./frontend/coverage/coverage-summary.json').toString())
+      JSON.parse(
+        fs.readFileSync('./frontend/coverage/coverage-summary.json').toString()
+      )
     )
     const currentDirectory = execSync('pwd')
       .toString()
