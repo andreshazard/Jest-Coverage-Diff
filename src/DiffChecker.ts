@@ -2,6 +2,12 @@ import {CoverageReport} from './Model/CoverageReport'
 import {DiffCoverageReport} from './Model/DiffCoverageReport'
 import {CoverageData} from './Model/CoverageData'
 import {DiffFileCoverageData} from './Model/DiffFileCoverageData'
+import {DiffCoverageData} from './Model/DiffCoverageData'
+
+const increasedCoverageIcon = ':green_circle:'
+const decreasedCoverageIcon = ':red_circle:'
+const newCoverageIcon = ':sparkles: :new:'
+const removedCoverageIcon = ':x:'
 
 export class DiffChecker {
   private diffCoverageReport: DiffCoverageReport = {}
@@ -10,51 +16,26 @@ export class DiffChecker {
     coverageReportOld: CoverageReport
   ) {
     const reportNewKeys = Object.keys(coverageReportNew)
-    for (const key of reportNewKeys) {
-      this.diffCoverageReport[key] = {
+    const reportOldKeys = Object.keys(coverageReportOld)
+    const reportKeys = new Set([...reportNewKeys, ...reportOldKeys])
+
+    for (const filePath of reportKeys) {
+      this.diffCoverageReport[filePath] = {
         branches: {
-          newPct: this.getPercentage(coverageReportNew[key].branches)
+          newPct: this.getPercentage(coverageReportNew[filePath]?.branches),
+          oldPct: this.getPercentage(coverageReportOld[filePath]?.branches)
         },
         statements: {
-          newPct: this.getPercentage(coverageReportNew[key].statements)
+          newPct: this.getPercentage(coverageReportNew[filePath]?.statements),
+          oldPct: this.getPercentage(coverageReportOld[filePath]?.statements)
         },
         lines: {
-          newPct: this.getPercentage(coverageReportNew[key].lines)
+          newPct: this.getPercentage(coverageReportNew[filePath]?.lines),
+          oldPct: this.getPercentage(coverageReportOld[filePath]?.lines)
         },
         functions: {
-          newPct: this.getPercentage(coverageReportNew[key].functions)
-        }
-      }
-    }
-    const reportOldKeys = Object.keys(coverageReportOld)
-    for (const key of reportOldKeys) {
-      if (this.diffCoverageReport[key]) {
-        this.diffCoverageReport[key].statements.oldPct = this.getPercentage(
-          coverageReportOld[key].statements
-        )
-        this.diffCoverageReport[key].branches.oldPct = this.getPercentage(
-          coverageReportOld[key].branches
-        )
-        this.diffCoverageReport[key].functions.oldPct = this.getPercentage(
-          coverageReportOld[key].functions
-        )
-        this.diffCoverageReport[key].lines.oldPct = this.getPercentage(
-          coverageReportOld[key].lines
-        )
-      } else {
-        this.diffCoverageReport[key] = {
-          branches: {
-            oldPct: this.getPercentage(coverageReportOld[key].branches)
-          },
-          statements: {
-            oldPct: this.getPercentage(coverageReportOld[key].statements)
-          },
-          lines: {
-            oldPct: this.getPercentage(coverageReportOld[key].lines)
-          },
-          functions: {
-            oldPct: this.getPercentage(coverageReportOld[key].functions)
-          }
+          newPct: this.getPercentage(coverageReportNew[filePath]?.functions),
+          oldPct: this.getPercentage(coverageReportOld[filePath]?.functions)
         }
       }
     }
@@ -95,9 +76,7 @@ export class DiffChecker {
       >Object.keys(diffCoverageData)
       for (const key of keys) {
         if (diffCoverageData[key].oldPct !== diffCoverageData[key].newPct) {
-          const oldValue: number = Number(diffCoverageData[key].oldPct)
-          const newValue: number = Number(diffCoverageData[key].newPct)
-          if (oldValue - newValue > delta) {
+          if (-this.getPercentageDiff(diffCoverageData[key]) > delta) {
             return true
           }
         }
@@ -111,12 +90,30 @@ export class DiffChecker {
     name: string,
     diffFileCoverageData: DiffFileCoverageData
   ): string {
-    if (!diffFileCoverageData.branches.oldPct) {
-      return `**${name}** | **${diffFileCoverageData.statements.newPct}** | **${diffFileCoverageData.branches.newPct}** | **${diffFileCoverageData.functions.newPct}** | **${diffFileCoverageData.lines.newPct}**`
-    } else if (!diffFileCoverageData.branches.newPct) {
-      return `~~${name}~~ | ~~${diffFileCoverageData.statements.oldPct}~~ | ~~${diffFileCoverageData.branches.oldPct}~~ | ~~${diffFileCoverageData.functions.oldPct}~~ | ~~${diffFileCoverageData.lines.oldPct}~~`
+    // No old coverage found so that means we added a new file coverage
+    const fileNewCoverage = Object.values(diffFileCoverageData).every(
+      coverageData => coverageData.oldPct === 0
+    )
+    // No new coverage found so that means we deleted a file coverage
+    const fileRemovedCoverage = Object.values(diffFileCoverageData).every(
+      coverageData => coverageData.newPct === 0
+    )
+    if (fileNewCoverage) {
+      return ` ${newCoverageIcon} | **${name}** | **${diffFileCoverageData.statements.newPct}** | **${diffFileCoverageData.branches.newPct}** | **${diffFileCoverageData.functions.newPct}** | **${diffFileCoverageData.lines.newPct}**`
+    } else if (fileRemovedCoverage) {
+      return ` ${removedCoverageIcon} | ~~${name}~~ | ~~${diffFileCoverageData.statements.oldPct}~~ | ~~${diffFileCoverageData.branches.oldPct}~~ | ~~${diffFileCoverageData.functions.oldPct}~~ | ~~${diffFileCoverageData.lines.oldPct}~~`
     }
-    return `${name} | ~~${diffFileCoverageData.statements.oldPct}~~ **${diffFileCoverageData.statements.newPct}** | ~~${diffFileCoverageData.branches.oldPct}~~ **${diffFileCoverageData.branches.newPct}** | ~~${diffFileCoverageData.functions.oldPct}~~ **${diffFileCoverageData.functions.newPct}** | ~~${diffFileCoverageData.lines.oldPct}~~ **${diffFileCoverageData.lines.newPct}**`
+    // Coverage existed before so calculate the diff status
+    const statusIcon = this.getStatusIcon(diffFileCoverageData)
+    return ` ${statusIcon} | ${name} | ${
+      diffFileCoverageData.statements.newPct
+    } **(${this.getPercentageDiff(diffFileCoverageData.statements)})** | ${
+      diffFileCoverageData.branches.newPct
+    } **(${this.getPercentageDiff(diffFileCoverageData.branches)})** | ${
+      diffFileCoverageData.functions.newPct
+    } **(${this.getPercentageDiff(diffFileCoverageData.functions)})** | ${
+      diffFileCoverageData.lines.newPct
+    } **(${this.getPercentageDiff(diffFileCoverageData.lines)})**`
   }
 
   private compareCoverageValues(
@@ -134,6 +131,26 @@ export class DiffChecker {
   }
 
   private getPercentage(coverageData: CoverageData): number {
-    return coverageData.pct
+    return coverageData?.pct || 0
+  }
+
+  private getStatusIcon(
+    diffFileCoverageData: DiffFileCoverageData
+  ): ':green_circle:' | ':red_circle:' {
+    let overallDiff = 0
+    Object.values(diffFileCoverageData).forEach(coverageData => {
+      overallDiff = overallDiff + this.getPercentageDiff(coverageData)
+    })
+    if (overallDiff < 0) {
+      return decreasedCoverageIcon
+    }
+    return increasedCoverageIcon
+  }
+
+  private getPercentageDiff(diffData: DiffCoverageData): number {
+    // get diff
+    const diff = Number(diffData.newPct) - Number(diffData.oldPct)
+    // round off the diff to 2 decimal places
+    return Math.round((diff + Number.EPSILON) * 100) / 100
   }
 }
