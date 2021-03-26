@@ -2025,10 +2025,7 @@ function run() {
     var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            console.log('test log!!!!');
-            console.log(child_process_1.execSync('pwd').toString());
             child_process_1.execSync('cd frontend');
-            console.log(child_process_1.execSync('pwd').toString());
             const repoName = github.context.repo.repo;
             const repoOwner = github.context.repo.owner;
             const githubToken = core.getInput('accessToken');
